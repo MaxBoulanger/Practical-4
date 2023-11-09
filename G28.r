@@ -86,25 +86,49 @@ backward <- function(nn, k){
 }
 
 train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
-  nn$h <- forward(nn, inp)
+  
+  
   
   for(m in 1:nstep){
+    #Sample 10 points from the input
+    data_sample <- sample(inp, mb)
+    nn_list <- list()
+    
+    dh_average <- list()
+    dW_average <- list()
+    db_average <- list()
+    
+    #Run forward/backward on each point
     for(n in 1:mb){
-      #Sample 10 points from the input
-      #Run forward/backward on each point
-      #Get new gradients; store these
+      nn$h <- forward(nn, c(data_sample$Sepal.Length, data_sample$sepal.width,
+                            data_sample$Petal.Length, data_sample$Petal.Width))
+      nn_list[[n]] <- backward(nn,k)
+      
+      
+      for(l in length(nn_list[[n]])){
+        dh_average[[n]][l] <- dh_average[[n]][l] + nn_list[[dh]][l]
+        dW_average[[n]][l] <- dW_average[[n]][l] + nn_list[[dW]][l]
+        db_average[[n]][l] <- db_average[[n]][l] + nn_list[[db]][l]
+      }
+      
+      
+      
     }
     #Take the average of our 10 gradients
-    #Update our weights according to these
-    nn <- backward(nn,k)
-    #Compute new W's and new b's
-    for(i in 1:length(nn$h)){
-      nn$w[[i]] <- nn$w[[i]] - (eta*nn$dW[[i]])
-      nn$b[[i]] <- nn$b[[i]] - (eta*nn$db[[i]])
+    for(l in length(dh_average[[1]])){
+
+      dh_average[[n]][l] <- dh_average[[n]][l]/mb
+      dW_average[[n]][l] <- dW_average[[n]][l]/mb
+      db_average[[n]][l] <- db_average[[n]][l]/mb
     }
-    #Maybe sample a new set of points here?
-    nn$h <- forward(nn, nn$h[[1]])
+    #Get new gradients; store these
+    for(i in 1:length(nn$h)){
+      nn$w[[i]] <- nn$w[[i]] - (eta*dW_average[[i]])
+      nn$b[[i]] <- nn$b[[i]] - (eta*db_average[[i]])
+    }
   }
+  
+  return(nn)
 }
 
 irisFunct <- function(){
