@@ -14,7 +14,7 @@ netup <- function(d){
   
   w <- list()
   b <- list()
-  for(i in 1:length(d)-1){
+  for(i in 1:(length(d)-1)){
     w[[i]] <- matrix(runif(1,0,0.2), length(h[[i+1]]), length(h[[i]] ) )
     b[[i]] <- runif(length(h[[i+1]]), 0, 0.2) #Make sure these are actually random
   }
@@ -29,12 +29,12 @@ forward <- function(nn, inp){
   
   h<- nn$h
   
-  for (i in 1:length(h[[1]])){
+  for (i in 1:(length(h[[1]]))){
     h[[1]][i] <- inp[i]
   }
   
-  for (i in 1:length(h)-1){
-    vec <- (nn$w %*% h[[i]]) + nn$b
+  for (i in 1:(length(h)-1)){
+    vec <- (nn$w[[i]] %*% h[[i]]) + nn$b[[i]]
     vec2 <- sapply(vec, h_val)
     h[[i+1]] <- vec2
   }
@@ -53,7 +53,7 @@ backward <- function(nn, k){
   dh <- list()
   db<- list()
   dW <- list()
-  for(j in 1:h[[L]]){
+  for(j in 1:length(h[[L]])){
     dh[[L]]<-rep(0,j)
     if(j!=k){
       dh[[L]][j] <- exp(h[[L]][j])/sum(h[[L]])
@@ -91,7 +91,7 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
   
   for(m in 1:nstep){
     #Sample 10 points from the input
-    data_sample <- sample(inp, mb)
+    data_sample <- sample(1:length(inp$Sepal.Length), mb) #Generalize for any data set
     nn_list <- list()
     
     dh_average <- list()
@@ -100,9 +100,11 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     
     #Run forward/backward on each point
     for(n in 1:mb){
-      nn$h <- forward(nn, c(data_sample$Sepal.Length, data_sample$sepal.width,
-                            data_sample$Petal.Length, data_sample$Petal.Width))
-      nn_list[[n]] <- backward(nn,k)
+      #Generalize this later
+      nn$h <- forward(nn, c(inp$Sepal.Length[data_sample[n]], inp$sepal.width[data_sample[n]],
+                            inp$Petal.Length[data_sample[n]], inp$Petal.Width[data_sample[n]]))
+      kstar <- k[data_sample]
+      nn_list[[n]] <- backward(nn,kstar[n])
       
       
       for(l in length(nn_list[[n]])){
@@ -132,8 +134,21 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
 }
 
 irisFunct <- function(){
-  netup(c(48))
+  nn<- netup(c(4,8,7,3))
+  vec = rep(0,length(iris$Species))
+  vec[iris$Species=='Setosa'] <- 1
+  vec[iris$Species=='versicolor'] <- 2
+  vec[iris$Species=='virginica'] <- 3
+  
+  
+  
+  #Modify iris so that it only includes 4 of every 5 rows
+  nn1<- train(nn, iris, vec)
+  
+  
 }
+
+irisFunct()
 
 
 
