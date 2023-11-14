@@ -118,22 +118,49 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       dh_list[[n]] <- nn_matrix$dh
       dW_list[[n]] <- nn_matrix$dW
       db_list[[n]] <- nn_matrix$db
+      #print(dh_list)
+      #print(dW_list)
+      #print(db_list)
+      
       
       for(l in 1:length(nn_matrix$dh)){
-        dh_average[[n]][l] <- dh_average[[n]][l] + dh_list[[n]][l]
-        dW_average[[n]][l] <- dW_average[[n]][l] + dW_list[[n]][l]
-        db_average[[n]][l] <- db_average[[n]][l] + db_list[[n]][l]
+        #print(nn_matrix$dh[[l]])
+        if (n == 1){
+          dh_average[[l]] <- nn_matrix$dh[[l]]
+        }
+        else{
+        #print(dh_list[[l]][n])
+          #dh_average[[l]] <- dh_average[[l]] + nn_matrix$dh[[l]]
+        }
+      }
+      #print(dh_average)
+      for(l in 1:length(nn_matrix$dW)){
+        #print(nn_matrix$dW[[l]])
+        if (n == 1){
+          dW_average[[l]] <- nn_matrix$dW[[l]]
+        }
+        else{
+          #dW_average[[l]] <- dW_average[[l]] + nn_matrix$dW[[l]]
+        }
       }
       
-      
+      for(l in 1:length(nn_matrix$db)){
+        print(nn_matrix$db[[l]])
+        if (n == 1){
+          db_average[[l]] <- nn_matrix$db[[l]]
+        }
+        else {
+          db_average[[l]] <- db_average[[l]] + nn_matrix$db[[l]]
+        }
+      }
       
     }
     #Take the average of our 10 gradients
     for(l in 1:length(dh_average[[1]])){
 
-      dh_average[[n]][l] <- dh_average[[n]][l]/mb
-      dW_average[[n]][l] <- dW_average[[n]][l]/mb
-      db_average[[n]][l] <- db_average[[n]][l]/mb
+      dh_average[[l]] <- dh_average[[l]]/mb
+      dW_average[[l]] <- dW_average[[l]]/mb
+      db_average[[l]] <- db_average[[l]]/mb
     }
     #Get new gradients; store these
     for(i in 1:length(nn$h)){
@@ -163,6 +190,7 @@ irisFunct <- function(){
 irisFunct()
 
 
-
+# Addition is adding lists as columns, matrix addition not happening
+# Problem with dh values 
 
 
