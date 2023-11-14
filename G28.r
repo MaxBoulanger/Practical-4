@@ -10,6 +10,7 @@ netup <- function(d){
   h <- list()
   for(i in 1:length(d)){
     h[[i]] = rep(0,d[i])
+    #print(h[[i]])
   }
   
   w <- list()
@@ -28,17 +29,18 @@ netup <- function(d){
 forward <- function(nn, inp){
   
   h<- nn$h
-  
+  #print(h)
   for (i in 1:(length(h[[1]]))){
     h[[1]][i] <- inp[i]
   }
-  
+  #print(inp)
+  #print(h)
   for (i in 1:(length(h)-1)){
     vec <- (nn$w[[i]] %*% h[[i]]) + nn$b[[i]]
     vec2 <- sapply(vec, h_val)
     h[[i+1]] <- vec2
   }
-  
+  #print(h)
   return(h)
 }
 
@@ -49,7 +51,7 @@ h_val <- function(vec){
 backward <- function(nn, k){
   L = length(nn$h)
   h <- nn$h
-  
+  #print(h)
   dh <- list()
   db<- list()
   dW <- list()
@@ -64,8 +66,9 @@ backward <- function(nn, k){
   }
   
   for(i in (L-1):1){
-    d<-rep(0,length(h[[i]]))
-    for(j in 1:length(h[[i]])){
+    d<-rep(0,length(h[[i+1]]))
+    for(j in 1:length(h[[i+1]])){
+      #print(h[[i+1]])
       if(h[[i+1]][j]>0){
         d[j] <- dh[[i+1]][j]
       }
@@ -73,15 +76,17 @@ backward <- function(nn, k){
         d[j]<-0
       }
     }
+    #print(t(nn$w[[i]]))
+    #print(d)
     dh[[i]] <- t(nn$w[[i]]) %*% d
     db[[i]] <- d
     dW[[i]] <- d%*%t(h[[i]])
   }
   
-  nn[[dh]] <- dh
-  nn[[db]] <- db
-  nn[[dW]] <- dW
-  
+  nn[['dh']] <- dh
+  nn[['db']] <- db
+  nn[['dW']] <- dW
+  #print(nn)
   return(nn)
 }
 
@@ -97,27 +102,34 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     dh_average <- list()
     dW_average <- list()
     db_average <- list()
+    dh_list <- list()
+    dW_list <- list()
+    db_list <- list()
     
     #Run forward/backward on each point
     for(n in 1:mb){
       #Generalize this later
-      nn$h <- forward(nn, c(inp$Sepal.Length[data_sample[n]], inp$sepal.width[data_sample[n]],
+      nn$h <- forward(nn, c(inp$Sepal.Length[data_sample[n]], inp$Sepal.Width[data_sample[n]],
                             inp$Petal.Length[data_sample[n]], inp$Petal.Width[data_sample[n]]))
+      #print(nn$h)
       kstar <- k[data_sample]
-      nn_list[[n]] <- backward(nn,kstar[n])
+      #print(kstar)
+      nn_matrix <- backward(nn,kstar[n])
+      dh_list[[n]] <- nn_matrix$dh
+      dW_list[[n]] <- nn_matrix$dW
+      db_list[[n]] <- nn_matrix$db
       
-      
-      for(l in length(nn_list[[n]])){
-        dh_average[[n]][l] <- dh_average[[n]][l] + nn_list[[dh]][l]
-        dW_average[[n]][l] <- dW_average[[n]][l] + nn_list[[dW]][l]
-        db_average[[n]][l] <- db_average[[n]][l] + nn_list[[db]][l]
+      for(l in 1:length(nn_matrix$dh)){
+        dh_average[[n]][l] <- dh_average[[n]][l] + dh_list[[n]][l]
+        dW_average[[n]][l] <- dW_average[[n]][l] + dW_list[[n]][l]
+        db_average[[n]][l] <- db_average[[n]][l] + db_list[[n]][l]
       }
       
       
       
     }
     #Take the average of our 10 gradients
-    for(l in length(dh_average[[1]])){
+    for(l in 1:length(dh_average[[1]])){
 
       dh_average[[n]][l] <- dh_average[[n]][l]/mb
       dW_average[[n]][l] <- dW_average[[n]][l]/mb
