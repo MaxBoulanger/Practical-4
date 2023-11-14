@@ -145,9 +145,10 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       }
       
       for(l in 1:length(nn_matrix$db)){
-        print(nn_matrix$db[[l]])
+        
         if (n == 1){
           db_average[[l]] <- nn_matrix$db[[l]]
+          #print(nn_matrix$db[[l]])
         }
         else {
           db_average[[l]] <- db_average[[l]] + nn_matrix$db[[l]]
@@ -157,13 +158,15 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     }
     #Take the average of our 10 gradients
     for(l in 1:length(dh_average[[1]])){
-
       dh_average[[l]] <- dh_average[[l]]/mb
+    }
+    for(l in 1:length(db_average)){
       dW_average[[l]] <- dW_average[[l]]/mb
       db_average[[l]] <- db_average[[l]]/mb
     }
+    
     #Get new gradients; store these
-    for(i in 1:length(nn$h)){
+    for(i in 1:(length(nn$h)-1)){
       nn$w[[i]] <- nn$w[[i]] - (eta*dW_average[[i]])
       nn$b[[i]] <- nn$b[[i]] - (eta*db_average[[i]])
     }
