@@ -40,7 +40,7 @@ netup <- function(d){
     #Create and store a weight matrix with rows equal to the size of the next
     #level and columns equal to the size of the current one, with values uniform
     #random on (0,0.2)
-    w[[i]] <- matrix(runif(1,0,0.2), length(h[[i+1]]), length(h[[i]] ) )
+    w[[i]] <- matrix(runif(length(h[[i+1]])*length(h[[i]]),0,0.2), length(h[[i+1]]), length(h[[i]] ) )
     #Create and store an offset vector of size equal to the next level, with
     #values uniform random on (0,0.2)
     b[[i]] <- runif(length(h[[i+1]]), 0, 0.2) #Make sure these are actually random
@@ -115,24 +115,29 @@ backward <- function(nn, k){
   #Retrieve the nodes for easy access
   h <- nn$h
   
+  #print('k')
+  #print(k)
+  #print('h')
+  #print(h)
+  
   #Initialize lists to store each of the derivatives
   dh <- list()
   db<- list()
   dW <- list()
-  
+  #Create a vector to store the derivatives
+  dh[[L]]<-rep(0,length(h[[L]]))
   #Iterate across nodes in the final layer
   for(j in 1:length(h[[L]])){
-    #Create a vector to store the derivatives
-    dh[[L]]<-rep(0,j)
-    
+
+
     #If we're at the "incorrect" node for the data point compute the 
     #derivative of the loss as shown:
     if(j!=k){
-      dh[[L]][j] <- exp(h[[L]][j])/sum(exp(h[[L]]))
+      dh[[L]][j] <- (exp(h[[L]][j])) /sum(exp(h[[L]]))
     }
     #Otherwise, subtract 1 from the derivative
     else{
-      dh[[L]][j] <- (exp(h[[L]][j])/sum(exp(h[[L]])))-1
+      dh[[L]][j] <- ((exp(h[[L]][j]))/sum(exp(h[[L]])))-1
     }
   }
   
@@ -151,11 +156,21 @@ backward <- function(nn, k){
       }
     }
     
+
+    
     #Compute the derivatives to be stored
     dh[[i]] <- t(nn$w[[i]]) %*% d
     db[[i]] <- d
     dW[[i]] <- d%*%t(h[[i]])
   }
+  #print('dh')
+  #print(dh)
+  
+  #print('w')
+  #print(nn$w)
+  
+  #print('b')
+  #print(nn$b)
   
   #Store the results to the nn model list and return
   nn[['dh']] <- dh
@@ -169,8 +184,8 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
   
   
   for(m in 1:nstep){
-    #Sample 10 points from the input
-    data_sample <- sample(1:length(inp$Sepal.Length), mb) #Generalize for any data set
+    #Sample mb points from the input
+    data_sample <- sample(1:length(inp[,1]), mb) #Generalize for any data set
     nn_list <- list()
     
     dh_average <- list()
@@ -182,19 +197,13 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     
     #Run forward/backward on each point
     for(n in 1:mb){
-      #Generalize this later
-      nn$h <- forward(nn, c(inp$Sepal.Length[data_sample[n]], inp$Sepal.Width[data_sample[n]],
-                            inp$Petal.Length[data_sample[n]], inp$Petal.Width[data_sample[n]]))
-      #print(nn$h)
+      nn$h <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+                            inp[data_sample[n],3], inp[data_sample[n],4]))
       kstar <- k[data_sample]
-      #print(kstar)
       nn_matrix <- backward(nn,kstar[n])
       dh_list[[n]] <- nn_matrix$dh
       dW_list[[n]] <- nn_matrix$dW
       db_list[[n]] <- nn_matrix$db
-      #print(dh_list)
-      #print(dW_list)
-      #print(db_list)
       
       
       for(l in 1:length(nn_matrix$dh)){
