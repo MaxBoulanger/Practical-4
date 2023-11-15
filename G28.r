@@ -124,44 +124,44 @@ backward <- function(nn, k){
   dh <- list()
   db<- list()
   dW <- list()
-  #Create a vector to store the derivatives
+  
+  #Create a vector to store the final layer of derivatives
   dh[[L]]<-rep(0,length(h[[L]]))
-  #Iterate across nodes in the final layer
-  for(j in 1:length(h[[L]])){
-
-
-    #If we're at the "incorrect" node for the data point compute the 
-    #derivative of the loss as shown:
-    if(j!=k){
-      dh[[L]][j] <- (exp(h[[L]][j])) /sum(exp(h[[L]]))
-    }
-    #Otherwise, subtract 1 from the derivative
-    else{
-      dh[[L]][j] <- ((exp(h[[L]][j]))/sum(exp(h[[L]])))-1
-    }
-  }
+  
+  #Set the derivatives of loss with respect to the final layer of nodes
+  dh[[L]] <- (exp(h[[L]])) /sum(exp(h[[L]]))
+  dh[[L]][k] <- dh[[L]][k] - 1
   
   #Iterate backwards across all layers except the last one
   for(i in (L-1):1){
     #Create a vector to store the loss derivatives for all nodes
-    d<-rep(0,length(h[[i+1]]))
-    #Iterate across nodes in each layer
-    for(j in 1:length(h[[i+1]])){
-      #Use the relevant expression to compute this (I assume we'll want to put this into its own function and vectorize)
-      if(h[[i+1]][j]>0){
-        d[j] <- dh[[i+1]][j]
-      }
-      else{
-        d[j]<-0
-      }
-    }
+    # d<-rep(0,length(h[[i+1]]))
+    # #Iterate across nodes in each layer
+    # for(j in 1:length(h[[i+1]])){
+    #   if(h[[i+1]][j]>0){
+    #     d[j] <- dh[[i+1]][j]
+    #   }
+    #   else{
+    #     d[j]<-0
+    #   }
+    # }
+    d2 <- rep(0,length(h[[i+1]]))
+    zeros <- which(dh[[i+1]]<0)
+    d2 <- dh[[i+1]]
+    d2 <- c(d2)
+    d2[zeros] <- 0
     
+    #print('d2')
+    #print(d2)
+
+    #print('d')
+    #print(d)
 
     
     #Compute the derivatives to be stored
-    dh[[i]] <- t(nn$w[[i]]) %*% d
-    db[[i]] <- d
-    dW[[i]] <- d%*%t(h[[i]])
+    dh[[i]] <- t(nn$w[[i]]) %*% d2
+    db[[i]] <- d2
+    dW[[i]] <- d2%*%t(h[[i]])
   }
   #print('dh')
   #print(dh)
@@ -182,10 +182,9 @@ backward <- function(nn, k){
 train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
   
   
-  
   for(m in 1:nstep){
     #Sample mb points from the input
-    data_sample <- sample(1:length(inp[,1]), mb) #Generalize for any data set
+    data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
     nn_list <- list()
     
     dh_average <- list()
@@ -205,25 +204,22 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       dW_list[[n]] <- nn_matrix$dW
       db_list[[n]] <- nn_matrix$db
       
-      
       for(l in 1:length(nn_matrix$dh)){
         #print(nn_matrix$dh[[l]])
         if (n == 1){
           dh_average[[l]] <- nn_matrix$dh[[l]]
+
         }
         else{
-        #print(dh_list[[l]][n])
-          #dh_average[[l]] <- dh_average[[l]] + nn_matrix$dh[[l]]
+          dh_average[[l]] <- dh_average[[l]]+nn_matrix$dh[[l]]
         }
       }
-      #print(dh_average)
       for(l in 1:length(nn_matrix$dW)){
-        #print(nn_matrix$dW[[l]])
         if (n == 1){
           dW_average[[l]] <- nn_matrix$dW[[l]]
         }
         else{
-          #dW_average[[l]] <- dW_average[[l]] + nn_matrix$dW[[l]]
+          dW_average[[l]] <- dW_average[[l]] + nn_matrix$dW[[l]]
         }
       }
       
@@ -237,7 +233,6 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
           db_average[[l]] <- db_average[[l]] + nn_matrix$db[[l]]
         }
       }
-      
     }
     #Take the average of our 10 gradients
     for(l in 1:length(dh_average[[1]])){
@@ -278,7 +273,9 @@ irisFunct <- function(){
     iris_vec <- c(iris_predict[i,1],iris_predict[i,2],iris_predict[i,3],iris_predict[i,4])
     nn_temp <- forward(nn1, iris_vec)
     #Convert these into probabilities using the equations on the sheet
-    print(nn_temp[[4]])
+    sum_exp <- sum(exp(nn_temp[[4]]))
+    probs <- exp(nn_temp[[4]]) / sum_exp
+    print(probs)
   }
   
   
