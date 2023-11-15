@@ -108,26 +108,41 @@ h_val <- function(val){
 }
 
 backward <- function(nn, k){
+  #Add docstring
+  
+  #Find the number of layers
   L = length(nn$h)
+  #Retrieve the nodes for easy access
   h <- nn$h
-  #print(h)
+  
+  #Initialize lists to store each of the derivatives
   dh <- list()
   db<- list()
   dW <- list()
+  
+  #Iterate across nodes in the final layer
   for(j in 1:length(h[[L]])){
+    #Create a vector to store the derivatives
     dh[[L]]<-rep(0,j)
+    
+    #If we're at the "incorrect" node for the data point compute the 
+    #derivative of the loss as shown:
     if(j!=k){
-      dh[[L]][j] <- exp(h[[L]][j])/sum(h[[L]])
+      dh[[L]][j] <- exp(h[[L]][j])/sum(exp(h[[L]]))
     }
+    #Otherwise, subtract 1 from the derivative
     else{
-      dh[[L]][j] <- (exp(h[[L]][j])/sum(h[[L]]))-1
+      dh[[L]][j] <- (exp(h[[L]][j])/sum(exp(h[[L]])))-1
     }
   }
   
+  #Iterate backwards across all layers except the last one
   for(i in (L-1):1){
+    #Create a vector to store the loss derivatives for all nodes
     d<-rep(0,length(h[[i+1]]))
+    #Iterate across nodes in each layer
     for(j in 1:length(h[[i+1]])){
-      #print(h[[i+1]])
+      #Use the relevant expression to compute this (I assume we'll want to put this into its own function and vectorize)
       if(h[[i+1]][j]>0){
         d[j] <- dh[[i+1]][j]
       }
@@ -135,17 +150,17 @@ backward <- function(nn, k){
         d[j]<-0
       }
     }
-    #print(t(nn$w[[i]]))
-    #print(d)
+    
+    #Compute the derivatives to be stored
     dh[[i]] <- t(nn$w[[i]]) %*% d
     db[[i]] <- d
     dW[[i]] <- d%*%t(h[[i]])
   }
   
+  #Store the results to the nn model list and return
   nn[['dh']] <- dh
   nn[['db']] <- db
   nn[['dW']] <- dW
-  #print(nn)
   return(nn)
 }
 
