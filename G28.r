@@ -97,10 +97,11 @@ h_val <- function(val){
   # to_return - returns 0 if the inputted value is less than 0 and the inputted
   #             value otherwise
   
-  #Perform the function
+  #Check if val is less than 0; return 0 if so
   if(val<=0){
     return(0)
   }
+  #Otherwise return val
   else{
     return(val)
   }
