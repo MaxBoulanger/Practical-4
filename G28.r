@@ -277,6 +277,7 @@ irisFunct <- function(){
   for(i in 1:length(iris_predict[,1])){
     iris_vec <- c(iris_predict[i,1],iris_predict[i,2],iris_predict[i,3],iris_predict[i,4])
     nn_temp <- forward(nn1, iris_vec)
+    #Convert these into probabilities using the equations on the sheet
     print(nn_temp[[4]])
   }
   
