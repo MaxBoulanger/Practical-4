@@ -83,6 +83,8 @@ forward <- function(nn, inp){
     #Store the new node vector
     h[[i+1]] <- vec2
   }
+  #print('h')
+  #print(h)
   
   #Return the list of node vectors
   return(h)
@@ -110,6 +112,8 @@ h_val <- function(val){
 backward <- function(nn, k){
   #Add docstring
   
+  #print('k')
+  #print(k)
   #Find the number of layers
   L = length(nn$h)
   #Retrieve the nodes for easy access
@@ -284,6 +288,10 @@ irisFunct <- function(){
 irisFunct()
 
 
-#I fixed up the indexing bugs we were having, and added some prediction code. Seems like the values are bad, unless I'm misinterpreting them.
-#To do: vectorize what we can to speed things up and avoid too many for loops. Figure out why the values are bad (probably take his advice of trying finite differencing), get the model trained,
-# and add comments (I started)
+#I spent some more time bug fixing. I caught some mistakes, but the last one I
+#caught (lines 141-156, we allowed a lot of d_j values to be <0 when they shouldn't have) actually made the values for the last set of nodes all
+#converge to 0, which is definitely wrong. I couldn't find the mistake, but I
+#think finite differencing will help. The code is also still very slow -- I
+#vectorized some of it, but I don't really know how to handle the parts with lists.
+#It implies on the sheet that we can use matrix operations but I'm not sure how.
+#Otherwise, only some of the code is commented, but we can do that at the end.
