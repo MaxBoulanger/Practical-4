@@ -313,9 +313,11 @@ irisFunct <- function(){
   #Find the initial loss
   hl <- matrix(0,120,3)
   ls1 <-0
+  #Find the output layer of the network for each point
   for(i in 1:120){
     hl[i,1:3]<-forward(nn,as.numeric(iris_train[i,1:4]))[[4]]
   }
+  #Apply the loss function and sum the results
   loss1calc<- sapply(vec_train,loss,hL=hl[i,1:3])
   ls1 <- sum(loss1calc)
   print('Initial loss:')
@@ -324,11 +326,14 @@ irisFunct <- function(){
   #Train a network with the training data
   nn1<- train(nn, iris_train, vec_train)
   
+  #Find the loss after fitting
+  #Find the the output layer of the network for each point
   hl <- matrix(0,120,3)
   ls2<-0
   for(i in 1:120){
     hl[i,1:3]<-forward(nn1,as.numeric(iris_train[i,1:4]))[[4]]
   }
+  #Compute the loss and sum it
   loss2calc<- sapply(vec_train,loss,hL=hl[i,1:3])
   ls2 <- sum(loss2calc)
   print('Final loss:')
