@@ -129,21 +129,22 @@ backward <- function(nn, k){
   #Retrieve the nodes for easy access
   h <- nn$h
   
-  #print('k')
-  #print(k)
-
+  print('k')
+  print(k)
   
-  #print('h')
-  #print(h)
+  print('h')
+  print(h[[L]])
+  
+  print('Loss')
+  l <- loss(k,h[[L]])
+  print(l)
+  
   
   
   #Initialize lists to store each of the derivatives
   dh <- list()
   db<- list()
   dW <- list()
-  
-  #print('w')
-  #print(nn$w)
   
   #Create a vector to store the final layer of derivatives
   dh[[L]]<-rep(0,length(h[[L]]))
@@ -152,7 +153,9 @@ backward <- function(nn, k){
   dh[[L]] <- (exp(h[[L]])) /sum(exp(h[[L]]))
   dh[[L]][k] <- dh[[L]][k] - 1
   
-  #print(dh[[L]])
+  
+  print('dh[L]')
+  print(dh[[L]])
   
   # l<- loss(k,h[[L]],1)
   # dl <- finite_difference(k,h[[L]])
@@ -161,11 +164,16 @@ backward <- function(nn, k){
   
   #Iterate backwards across all layers except the last one
   for(i in (L-1):1){
+    print('i'); print(i)
     d2 <- rep(0,length(h[[i+1]]))
     zeros <- which(dh[[i+1]]<0)
     d2 <- dh[[i+1]]
     d2 <- c(d2)
     d2[zeros] <- 0
+    
+    print('d2'); print(d2)
+    
+    print('h[i]');print(h[[i]])
     
     #print('d')
     #print(d2)
@@ -181,6 +189,13 @@ backward <- function(nn, k){
     dh[[i]] <- t(nn$w[[i]]) %*% d2
     db[[i]] <- d2
     dW[[i]] <- d2%*%t(h[[i]])
+    
+    print('w')
+    print(nn$w[[i]])
+    
+    print('dW')
+    print(i)
+    print(dW[[i]])
     
     #print('dW')
     #print(dW[[i]])
@@ -242,9 +257,6 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
                            inp[data_sample[n],3], inp[data_sample[n],4]))
     ls2 <- loss(k[1],nn$h2[[length(nn$h2)]],1)
     der <- (ls2-ls)/10^(-7)
-    
-    
-    
     nn<-backward(nn,k[1])
     print('Derivatives')
     print(nn$dW[[1]][1,1])
@@ -265,6 +277,7 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
                             inp[data_sample[n],3], inp[data_sample[n],4]))
       kstar <- k[data_sample]
       nn_matrix <- backward(nn,kstar[n])
+      print(nn_matrix$dh)
       dh_list[[n]] <- nn_matrix$dh
       dW_list[[n]] <- nn_matrix$dW
       db_list[[n]] <- nn_matrix$db
@@ -348,17 +361,23 @@ irisFunct <- function(){
   
 }
 
-irisFunct()
-
 loss <- function(k, hL, n=1){
   sum1 <- sum(exp(hL))
-  s1 <- log(exp(hL[k]/sum1))
+  print('Sum1')
+  print(sum1)
+  s1 <- log(exp(hL[k])/(sum1))
+  print('Sum2')
   s2 <- s1/n
-  print('s2')
   print(s2)
+  #print('s2')
+  #print(s2)
   s3<- -sum(s2)
   return(s3)
 }
+
+irisFunct()
+
+
 
 
 finite_difference <- function(k, hL){
