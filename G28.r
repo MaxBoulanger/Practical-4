@@ -3,7 +3,20 @@
 #
 #Git address: https://github.com/MaxBoulanger/Practical-4
 #
+#Will: I completed about 45% of the project. I worked with Max and TJ during
+#class time to structure and design drafts of the code, as well as debug. I also
+#spent significant time outside of class debugging and testing the code; I
+#caught several key bugs in the forward, backward, and train functions in this
+#way.
 #
+#This code allows for the construction of a neural network of arbitrary size,
+#which can be used (after training with some dataset) to predict qualitative
+#outputs based on continuous numerical inputs. To do this, we can create
+#lists of nodes for each layer in the network, and then generate arbitrary
+#weight matrices and offset vectors for each node layer: these are initially
+#generated from a uniform distribution, and then trained.We then sample small 
+#subsets of our input dataset. For each point in this dataset, we first comp-
+#ute the entire network of nodes: this is completed by 
 
 
 
@@ -109,16 +122,19 @@ h_val <- function(val){
 
 backward <- function(nn, k){
   #Takes a network list (containing nodes, weight matrices, and offset vectors)
-  #and an output class and calculated the derivatives of the loss function
+  #and an output class. Computes the derivatives of the loss function with 
+  #respect to each node (dh), the weight matrices (dw), and the offset vectors
+  #(db). Returns an updated network list containing the lists of vectors dh
+  #and db and the list of matrices dW.
   #
   #Inputs
-  # nn - network list returned from forward containing at least h, a list of node 
-  #      vectors, w, a list of weight matrices, and b, a list of offset vectors, 
-  #      all with the correct sizes for the shape of the network
-  # k - output class that we are interested in
+  # nn - network list returned from forward containing at least h, a list of 
+  #       node vectors, w, a list of weight matrices, and b, a list of offset
+  #       vectors, all with the correct sizes for the shape of the network
+  # k - output class of a given data point
   #
   #Outputs
-  # nn - netowrk list updated by adding the derivatives with regard to nodes, dh,
+  # nn - network list updated by adding the derivatives with regard to nodes, dh,
   #      weights, dW and offset, db
   
   #Find the number of layers
@@ -162,11 +178,14 @@ backward <- function(nn, k){
   #Iterate backwards across all layers except the last one
   for(i in (L-1):1){
     #print('i'); print(i)
-    d2 <- rep(0,length(h[[i+1]]))
+    
+    #Create a d vector for the (i+1)th layer, which is a copy of dh for that
+    #layer with the exception that negative values are given as 0
+    d <- rep(0,length(h[[i+1]]))
     zeros <- which(dh[[i+1]]<0)
-    d2 <- dh[[i+1]]
-    d2 <- c(d2)
-    d2[zeros] <- 0
+    d <- dh[[i+1]]
+    d <- c(d)
+    d[zeros] <- 0
     
     #print('d2'); print(d2)
     
@@ -183,9 +202,9 @@ backward <- function(nn, k){
 
     
     #Compute the derivatives to be stored
-    dh[[i]] <- t(nn$w[[i]]) %*% d2
-    db[[i]] <- d2
-    dW[[i]] <- d2%*%t(h[[i]])
+    dh[[i]] <- t(nn$w[[i]]) %*% d
+    db[[i]] <- d
+    dW[[i]] <- d%*%t(h[[i]])
     
     #print('w')
     #print(nn$w[[i]])
@@ -215,18 +234,22 @@ backward <- function(nn, k){
 
 train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
   #Takes a network list (containing nodes, weight matrices, and offset vectors),
-  #an input vector and its corresponding labels, the step size, the number of 
-  #data to randomly sample to compute the gradient and the number of 
-  #optimization steps to take, and trains our network 
+  #an input data sample and its corresponding labels, the step size, the number of 
+  #points to randomly sample to compute the gradient and the number of 
+  #optimization steps to take. Trains our network by, for each point in a small
+  #sample (size mb), propagating forward and backward to find the derivatives
+  #dW and db for the point, then averaging these for all 10 points, and using
+  #these gradients to update the weight matrices and offset vectors. This is then repeated
+  #for nstep times, resulting in well-trained weight matrices and offset vectors.
   #
   #Inputs
   # nn - network list returned from forward containing at least h, a list of node 
-  #      vectors, w, a list of weight matrices, b, a list of offset vectors, and
-  #      the derivatives with regard to nodes, dh, weights, dW and offset, db 
-  #      all with the correct sizes for the shape of the network
-  # inp - input vector of size equal to the number of nodes in the first level
+  #      vectors, w, a list of weight matrices, b, a list of offset vectors.
   #
-  # k - output class that we are interested in
+  # inp - input data set. Must have columns equal to the number of nodes in the
+  #       first layer.
+  #
+  # k - vector containing the output classes associated with each inp row.
   #
   # eta - step size used to update the parameters
   #
@@ -236,14 +259,15 @@ train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
   #
   #Outputs
   #
-  # nn - updated network list with new node vectors w and new list of offset
-  #      vectors
+  # nn - updated network list with trained weight matrices w and offset vectors 
+  #      b
   
   for(m in 1:nstep){
-    #Sample mb points from the input
+    #Sample mb points from the input and select the correct output points
     data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
-    nn_list <- list()
+    kstar <- k[data_sample]
     
+    #Delete when finished: finite differencing data
     n=1
     nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
                         inp[data_sample[n],3], inp[data_sample[n],4]))
@@ -264,31 +288,30 @@ train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
     dh_average <- list()
     dW_average <- list()
     db_average <- list()
-    dh_list <- list()
-    dW_list <- list()
-    db_list <- list()
     
-    #Run forward/backward on each point
+    #Iterate across our sample points
     for(n in 1:mb){
+      #Compute the nodes by forward propagating from the input
       nn$h <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
                             inp[data_sample[n],3], inp[data_sample[n],4]))
-      kstar <- k[data_sample]
+      
+      #Update the network with derivative matrices/vectors by back propgating 
+      #from the final layer of nodes generated by the forward step
       nn_matrix <- backward(nn,kstar[n])
       #print(nn_matrix$dh)
-      dh_list[[n]] <- nn_matrix$dh
-      dW_list[[n]] <- nn_matrix$dW
-      db_list[[n]] <- nn_matrix$db
       
-      
-      for(l in 1:length(nn_matrix$dh)){
 
-        if (n == 1){
-          dh_average[[l]] <- nn_matrix$dh[[l]]
-        }
-        else{
-          dh_average[[l]] <- dh_average[[l]]+nn_matrix$dh[[l]]
-        }
-      }
+      # for(l in 1:length(nn_matrix$dh)){
+      # 
+      #   if (n == 1){
+      #     dh_average[[l]] <- nn_matrix$dh[[l]]
+      #   }
+      #   else{
+      #     dh_average[[l]] <- dh_average[[l]]+nn_matrix$dh[[l]]
+      #   }
+      # }
+      
+      #Sum the current dW matrix with the prior ones to allow for averaging
       for(l in 1:length(nn_matrix$dW)){
         if (n == 1){
           dW_average[[l]] <- nn_matrix$dW[[l]]
@@ -297,8 +320,9 @@ train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
           dW_average[[l]] <- dW_average[[l]] + nn_matrix$dW[[l]]
         }
       }
+      
+      #Sum the current db vector with the prior ones to allow for averaging
       for(l in 1:length(nn_matrix$db)){
-        
         if (n == 1){
           db_average[[l]] <- nn_matrix$db[[l]]
         }
@@ -308,10 +332,13 @@ train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
       }
     }
     
-    #Take the average of our 10 gradients
-    for(l in 1:length(dh_average[[1]])){
-      dh_average[[l]] <- dh_average[[l]]/mb
-    }
+
+    #for(l in 1:length(dh_average[[1]])){
+    #  dh_average[[l]] <- dh_average[[l]]/mb
+    #}
+    
+    
+    #Take the average of our mb gradients for dW and db
     for(l in 1:length(db_average)){
       dW_average[[l]] <- dW_average[[l]]/mb
       db_average[[l]] <- db_average[[l]]/mb
@@ -326,41 +353,68 @@ train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
     
   }
   #print(nn$w)
+  
   #Return the updated list
   return(nn)
 }
 
 irisFunct <- function(){
-  #This function aims to apply our model to the iris database
+  #This function aims to apply our model to the iris database. It sets a random
+  #seed to ensure reproducibility, creates the network, cleans the data so it is
+  #usable and contains both training and testing portions, and then uses the 
+  #training data to train the network. Finally, it calculates the probability
+  #of each flower species for each test point, listing the most probable species
+  #for each point and computing the misclassification rate.
   
+  #Set a random seed that trains the function properly
   set.seed(0)
   
+  #Create a network with layers of size 4, 8, 7, and 3
   nn<- netup(c(4,8,7,3))
+  
+  #Classify the output data so it can be used with the network
   vec = rep(0,length(iris$Species))
   vec[iris$Species=='setosa'] <- 1
   vec[iris$Species=='versicolor'] <- 2
   vec[iris$Species=='virginica'] <- 3
   
+  #Divide the input data into 120 training points and 30 testing points
   output_indices = (1:30)*5
   iris_train <- iris[-output_indices, ]
   vec_train <- vec[-output_indices]
   
-  
-  #Modify iris so that it only includes 4 of every 5 rows
+  #Train a network with the training data
   nn1<- train(nn, iris_train, vec_train)
   
+  
   iris_predict <- iris[output_indices,]
+  probs<- matrix(0,c(length(iris_predict[,1]),3))
+  #Iterate across the testing points
   for(i in 1:5){
      # length(iris_predict[,1])){
+    #Generate the nodes for the given testing vector
     iris_vec <- c(iris_predict[i,1],iris_predict[i,2],iris_predict[i,3],iris_predict[i,4])
     nn_temp <- forward(nn1, iris_vec)
     #print(nn_temp)
     #Convert these into probabilities using the equations on the sheet
+    
+    #Compute the probability of each output for that vector
     sum_exp <- sum(exp(nn_temp[[4]]))
-    probs <- exp(nn_temp[[4]]) / sum_exp
+    probs[i] <- exp(nn_temp[[4]]) / sum_exp
+    
+    #Check this when the code works
+    
+
     #print(probs)
   }
+  #Find the maximum probability output for each test point
+  prob_max <- sapply(probs, which.max)
   
+  #Find the number of points that were correct, and print the misclassification
+  #rate
+  prob_correct <- which(prob_max==vec[output_indices])
+  print('Misclassification rate:')
+  print(1-(length(prob_correct)/30))
   
 }
 
