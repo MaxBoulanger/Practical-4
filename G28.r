@@ -9,6 +9,7 @@
 #caught several key bugs in the forward, backward, and train functions in this
 #way.
 #
+#
 #This code allows for the construction of a neural network of arbitrary size,
 #which can be used (after training with some dataset) to predict qualitative
 #outputs based on continuous numerical inputs. To do this, we can create
@@ -28,7 +29,11 @@
 #matrix and offset vector. We do this for each of our sampled points by working
 #backwards from the final layer of nodes. Finally, once we've calculated the
 #derivatives for each of our sampled points, we find the average of these and
-#adjust the weight matrices and offset vectors accordingly. 
+#adjust the weight matrices and offset vectors accordingly. We then repeat this
+#a lot (~10000) of times to get a trained network.
+#In our case, we use this technique on a 4-8-7-3 network to predict the species
+#of flower in the iris dataset. We take 4/5 of the data to train the model,
+#and use the final 1/5 to check the model for accuracy.
 
 
 netup <- function(d){
