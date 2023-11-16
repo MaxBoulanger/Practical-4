@@ -129,11 +129,21 @@ backward <- function(nn, k){
   #Retrieve the nodes for easy access
   h <- nn$h
   
+  #print('k')
+  #print(k)
+
+  
+  #print('h')
+  #print(h)
+  
   
   #Initialize lists to store each of the derivatives
   dh <- list()
   db<- list()
   dW <- list()
+  
+  #print('w')
+  #print(nn$w)
   
   #Create a vector to store the final layer of derivatives
   dh[[L]]<-rep(0,length(h[[L]]))
@@ -142,24 +152,23 @@ backward <- function(nn, k){
   dh[[L]] <- (exp(h[[L]])) /sum(exp(h[[L]]))
   dh[[L]][k] <- dh[[L]][k] - 1
   
+  #print(dh[[L]])
+  
+  # l<- loss(k,h[[L]],1)
+  # dl <- finite_difference(k,h[[L]])
+  # print(dl)
+  # print(dh[[L]][k])
+  
   #Iterate backwards across all layers except the last one
   for(i in (L-1):1){
-    #Create a vector to store the loss derivatives for all nodes
-    # d<-rep(0,length(h[[i+1]]))
-    # #Iterate across nodes in each layer
-    # for(j in 1:length(h[[i+1]])){
-    #   if(h[[i+1]][j]>0){
-    #     d[j] <- dh[[i+1]][j]
-    #   }
-    #   else{
-    #     d[j]<-0
-    #   }
-    # }
     d2 <- rep(0,length(h[[i+1]]))
     zeros <- which(dh[[i+1]]<0)
     d2 <- dh[[i+1]]
     d2 <- c(d2)
     d2[zeros] <- 0
+    
+    #print('d')
+    #print(d2)
     
     #print('d2')
     #print(d2)
@@ -172,6 +181,9 @@ backward <- function(nn, k){
     dh[[i]] <- t(nn$w[[i]]) %*% d2
     db[[i]] <- d2
     dW[[i]] <- d2%*%t(h[[i]])
+    
+    #print('dW')
+    #print(dW[[i]])
   }
   #print('dh')
   #print(dh)
@@ -215,10 +227,29 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
   # nn - updated network list with new node vectors w and new list of offset
   #      vectors
   
-  for(m in 1:nstep){
+  for(m in 1:1){
     #Sample mb points from the input
     data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
     nn_list <- list()
+    
+    n=1
+    nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+                        inp[data_sample[n],3], inp[data_sample[n],4]))
+    ls <- loss(k[1],nn$h[[length(nn$h)]],1)
+    w <- nn$w[[3]]
+    nn$w[[3]][1,1] <- nn$w[[3]][1,1] + 10^(-7)
+    nn$h2 <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+                           inp[data_sample[n],3], inp[data_sample[n],4]))
+    ls2 <- loss(k[1],nn$h2[[length(nn$h2)]],1)
+    der <- (ls2-ls)/10^(-7)
+    
+    
+    
+    nn<-backward(nn,k[1])
+    print('Derivatives')
+    print(nn$dW[[1]][1,1])
+    print(der)
+    
     
     #Initialize lists to store each of the averages
     dh_average <- list()
@@ -229,7 +260,7 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     db_list <- list()
     
     #Run forward/backward on each point
-    for(n in 1:mb){
+    for(n in 1:1){
       nn$h <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
                             inp[data_sample[n],3], inp[data_sample[n],4]))
       kstar <- k[data_sample]
@@ -288,6 +319,8 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
 irisFunct <- function(){
   #This function aims to apply our model to the iris database
   
+  set.seed(0)
+  
   nn<- netup(c(4,8,7,3))
   vec = rep(0,length(iris$Species))
   vec[iris$Species=='setosa'] <- 1
@@ -309,13 +342,34 @@ irisFunct <- function(){
     #Convert these into probabilities using the equations on the sheet
     sum_exp <- sum(exp(nn_temp[[4]]))
     probs <- exp(nn_temp[[4]]) / sum_exp
-    print(probs)
+    #print(probs)
   }
   
   
 }
 
 irisFunct()
+
+loss <- function(k, hL, n=1){
+  sum1 <- sum(exp(hL))
+  s1 <- log(exp(hL[k]/sum1))
+  s2 <- s1/n
+  print('s2')
+  print(s2)
+  s3<- -sum(s2)
+  return(s3)
+}
+
+
+finite_difference <- function(k, hL){
+  epsilon <-0.05
+  hLk_new <- hL[k]+epsilon
+  hL_new <- hL
+  hL_new[k] <- hLk_new
+  l1 <- loss(k, hL_new,1)
+  l2 <- loss(k, hL, 1 )
+  der <- (l1-l2)/epsilon
+}
 
 
 #I spent some more time bug fixing. I caught some mistakes, but the last one I
