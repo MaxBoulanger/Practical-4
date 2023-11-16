@@ -213,7 +213,7 @@ backward <- function(nn, k){
   return(nn)
 }
 
-train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
+train <- function(nn, inp, k, eta=0.01, mb = 3, nstep = 1){
   #Takes a network list (containing nodes, weight matrices, and offset vectors),
   #an input vector and its corresponding labels, the step size, the number of 
   #data to randomly sample to compute the gradient and the number of 
@@ -244,20 +244,20 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
     nn_list <- list()
     
-    # n=1
-    # nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
-    #                     inp[data_sample[n],3], inp[data_sample[n],4]))
-    # ls <- loss(k[1],nn$h[[length(nn$h)]],1)
-    # w <- nn$w[[3]]
-    # nn$w[[3]][1,1] <- nn$w[[3]][1,1] + 10^(-7)
-    # nn$h2 <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
-    #                        inp[data_sample[n],3], inp[data_sample[n],4]))
-    # ls2 <- loss(k[1],nn$h2[[length(nn$h2)]],1)
-    # der <- (ls2-ls)/10^(-7)
-    # nn<-backward(nn,k[1])
-    # print('Derivatives')
-    # print(nn$dW[[1]][1,1])
-    # print(der)
+    n=1
+    nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+                        inp[data_sample[n],3], inp[data_sample[n],4]))
+    ls <- loss(k[data_sample[n]],nn$h[[length(nn$h)]],1)
+    w <- nn$w[[1]]
+    nn$w[[1]][1,1] <- nn$w[[1]][1,1] + 10^(-7)
+    nn$h2 <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+                           inp[data_sample[n],3], inp[data_sample[n],4]))
+    ls2 <- loss(k[data_sample[n]],nn$h2[[length(nn$h2)]],1)
+    der <- (ls2-ls)/10^(-7)
+    nn<-backward(nn,k[1])
+    print('Derivatives')
+    print(nn$dW[[1]][1,1])
+    print(der)
     
     
     #Initialize lists to store each of the averages
@@ -323,8 +323,9 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       nn$w[[i]] <- nn$w[[i]] - (eta*dW_average[[i]])
       nn$b[[i]] <- nn$b[[i]] - (eta*db_average[[i]])
     }
+    
   }
-  
+  #print(nn$w)
   #Return the updated list
   return(nn)
 }
@@ -349,19 +350,22 @@ irisFunct <- function(){
   nn1<- train(nn, iris_train, vec_train)
   
   iris_predict <- iris[output_indices,]
-  for(i in 1:length(iris_predict[,1])){
+  for(i in 1:5){
+     # length(iris_predict[,1])){
     iris_vec <- c(iris_predict[i,1],iris_predict[i,2],iris_predict[i,3],iris_predict[i,4])
     nn_temp <- forward(nn1, iris_vec)
+    #print(nn_temp)
     #Convert these into probabilities using the equations on the sheet
     sum_exp <- sum(exp(nn_temp[[4]]))
     probs <- exp(nn_temp[[4]]) / sum_exp
-    print(probs)
+    #print(probs)
   }
   
   
 }
 
 loss <- function(k, hL, n=1){
+  
   sum1 <- sum(exp(hL))
   print('Sum1')
   print(sum1)
