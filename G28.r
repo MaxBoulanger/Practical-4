@@ -7,7 +7,7 @@
 #class time to structure and design drafts of the code, as well as debug. I also
 #spent significant time outside of class debugging and testing the code; I
 #caught several key bugs in the forward, backward, and train functions in this
-#way.
+#way. Found key bug in backwards function delaying completion of project.
 #
 #
 #This code allows for the construction of a neural network of arbitrary size,
@@ -196,27 +196,12 @@ backward <- function(nn, k){
     #print('i'); print(i)
     
     #Create a d vector for the (i+1)th layer, which is a copy of dh for that
-    #layer with the exception that negative values are given as 0
-    #zeros <- which(h[[i+1]]<0)
-    #print(zeros)
+    #layer with the exception that any term corresponding to a negative h
+    #value is given as 0
+    zeros <- which(h[[i+1]]<0)
     d <- dh[[i+1]]
     d <- c(d)
-    #print(d[zeros])
-    #d[zeros] <- 0
-    
-    #print('d2'); print(d2)
-    
-    #print('h[i+1]');print(h[[i+1]])
-    #print('dh[[i+1]]');print(dh[[i+1]])
-    
-    #print('d')
-    #print(d)
-    
-    #print('d2')
-    #print(d2)
-
-    #print('d')
-    #print(d)
+    d[zeros] <- 0
 
     
     #Compute the derivatives to be stored
@@ -224,21 +209,7 @@ backward <- function(nn, k){
     db[[i]] <- d
     dW[[i]] <- d%*%(t(h[[i]]))
     
-    #print('w')
-    #print(nn$w[[i]])
-    
-    #print('dH')
-    #print(i)
-    #print(dh[[i+1]])
-    
-    #print('dW')
-    #print(dW[[i]])
   }
-  #print('dh')
-  #print(dh)
-  
-  #print('w')
-  #print(nn$w)
   
   #Store the results to the nn model list and return
   nn[['dh']] <- dh
@@ -281,24 +252,7 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     #Sample mb points from the input and select the correct output points
     data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
     kstar <- k[data_sample]
-    
-    #Delete when finished: finite differencing data
-    # n=1
-    # nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
-    #                     inp[data_sample[n],3], inp[data_sample[n],4]))
-    # ls <- loss(k[data_sample[n]],nn$h[[length(nn$h)]],1)
-    # w <- nn$w[[3]]
-    # nn$w[[3]][1,1] <- nn$w[[3]][1,1] + 10^(-7)
-    # nn$h2 <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
-    #                        inp[data_sample[n],3], inp[data_sample[n],4]))
-    # ls2 <- loss(k[data_sample[n]],nn$h2[[length(nn$h2)]],1)
-    # der <- (ls2-ls)/10^(-7)
-    # nn<-backward(nn,k[data_sample[n]])
-    # print('Derivatives')
-    # print(w[1,1])
-    # print(der)
-    # 
-    
+
     #Initialize lists to store each of the averages
     dh_average <- list()
     dW_average <- list()
@@ -360,7 +314,7 @@ irisFunct <- function(){
   #for each point and computing the misclassification rate.
   
   #Set a random seed that trains the function properly
-  set.seed(1)
+  set.seed(2)
   
   #Create a network with layers of size 4, 8, 7, and 3
   nn<- netup(c(4,8,7,3))
@@ -376,12 +330,32 @@ irisFunct <- function(){
   iris_train <- iris[-output_indices, ]
   vec_train <- vec[-output_indices]
   
+  #Find the initial loss
+  hl <- matrix(0,120,3)
+  ls1 <-0
+  for(i in 1:120){
+    hl[i,1:3]<-forward(nn,as.numeric(iris_train[i,1:4]))[[4]]
+  }
+  loss1calc<- sapply(vec_train,loss,hL=hl[i,1:3])
+  loss1calc<- loss1calc/120
+  ls1 <- -sum(loss1calc)
+  print(ls1)
+  
   #Train a network with the training data
   nn1<- train(nn, iris_train, vec_train)
   
+  hl <- matrix(0,120,3)
+  ls2<-0
+  for(i in 1:120){
+    hl[i,1:3]<-forward(nn1,as.numeric(iris_train[i,1:4]))[[4]]
+  }
+  loss2calc<- sapply(vec_train,loss,hL=hl[i,1:3])
+  loss2calc<- loss2calc/120
+  ls2 <- -sum(loss2calc)
+  print(ls2)
+  
   
   iris_predict <- iris[output_indices,]
-  print(iris_predict[1:10,])
   probs<- matrix(0, length(iris_predict[,1]), 3)
   #Iterate across the testing points
   for(i in 1:length(iris_predict[,1])){
@@ -394,25 +368,21 @@ irisFunct <- function(){
     #Compute the probability of each output for that vector
     sum_exp <- sum(exp(nn_temp[[4]]))
     probs[i,1:3] <- exp(nn_temp[[4]]) / sum_exp
-    
-
-    
   }
-  
-  
-  #Check this when the code works
-  print(probs)
+
   #Find the maximum probability output for each test point
   prob_max <- max.col(probs)
 
+  #Create a vector of the predicted flowers
   output_flowers <- rep(0,length(iris_predict[,1]))
   output_flowers[prob_max==1] <- 'setosa'  
   output_flowers[prob_max==2] <- 'versicolor'
   output_flowers[prob_max==3] <- 'virginica'
-  #Find the number of points that were correct, and print the misclassification
-  #rate
   
-  print(output_flowers)
+  #Output_flowers contains the predicted flowers -- not sure whether to print
+  #print(output_flowers)
+  
+  #Find the number of correct predictions and print the misclassification rate
   prob_correct <- which(prob_max==vec[output_indices])
   print('Misclassification rate:')
   print(1-(length(prob_correct)/30))
@@ -420,18 +390,27 @@ irisFunct <- function(){
 }
 
 loss <- function(k, hL, n=1){
+  #Computes the loss of a final set of nodes using the equation 
+  # -Sum(i=1,n) [log(p_ki)/n], where i is the index of a training data pair,
+  #ki is the output associated with that pair, p_ki is the associated probabil
+  #ity (see introductory comments), and n is the number of pairs.
+  #
+  #Inputs:
+  #k - vector of training data outputs
+  #hL - final set of nodes associated with each training data input
+  #n - amount of training data
+  #
+  #Outputs:
+  #s3 - the loss associated with the data for the given model
   
+  #Compute the sum of the natural exponents of each output node
   sum1 <- sum(exp(hL))
-  #print('Sum1')
-  #print(sum1)
-  s1 <- log((exp(hL[k])/(sum1)))
-  #print('Sum2')
-  s2 <- s1/n
-  #print(s2)
-  #print('s2')
-  #print(s2)
-  s3<- -sum(s2)
-  return(s3)
+  #Compute the probability for each hL set and k value
+  s1 <- (exp(hL[k])/(sum1))
+  #Take the log and divide by n
+  s2 <- log(s1)
+  #Sum the values to get the loss
+  return(s2)
 }
 
 irisFunct()
