@@ -74,7 +74,6 @@ forward <- function(nn, inp){
   #Fill in the first node level with the input vector
   h[[1]] <- inp
   
-  #I BET WE CAN VECTORIZE THIS
   #Fill in the remaining values for the nodes using the input vector
   for (i in 1:(length(h)-1)){
     #Calculate w*h + b for the given level
@@ -84,8 +83,6 @@ forward <- function(nn, inp){
     #Store the new node vector
     h[[i+1]] <- vec2
   }
-  #print('h')
-  #print(h)
   
   #Return the list of node vectors
   return(h)
@@ -129,15 +126,15 @@ backward <- function(nn, k){
   #Retrieve the nodes for easy access
   h <- nn$h
   
-  print('k')
-  print(k)
+  #print('k')
+  #print(k)
   
-  print('h')
-  print(h[[L]])
+  #print('h')
+  #print(h[[L]])
   
-  print('Loss')
-  l <- loss(k,h[[L]])
-  print(l)
+  #print('Loss')
+  #l <- loss(k,h[[L]])
+  #print(l)
   
   
   
@@ -154,8 +151,8 @@ backward <- function(nn, k){
   dh[[L]][k] <- dh[[L]][k] - 1
   
   
-  print('dh[L]')
-  print(dh[[L]])
+  #print('dh[L]')
+  #print(dh[[L]])
   
   # l<- loss(k,h[[L]],1)
   # dl <- finite_difference(k,h[[L]])
@@ -164,16 +161,16 @@ backward <- function(nn, k){
   
   #Iterate backwards across all layers except the last one
   for(i in (L-1):1){
-    print('i'); print(i)
+    #print('i'); print(i)
     d2 <- rep(0,length(h[[i+1]]))
     zeros <- which(dh[[i+1]]<0)
     d2 <- dh[[i+1]]
     d2 <- c(d2)
     d2[zeros] <- 0
     
-    print('d2'); print(d2)
+    #print('d2'); print(d2)
     
-    print('h[i]');print(h[[i]])
+    #print('h[i]');print(h[[i]])
     
     #print('d')
     #print(d2)
@@ -190,12 +187,12 @@ backward <- function(nn, k){
     db[[i]] <- d2
     dW[[i]] <- d2%*%t(h[[i]])
     
-    print('w')
-    print(nn$w[[i]])
+    #print('w')
+    #print(nn$w[[i]])
     
-    print('dW')
-    print(i)
-    print(dW[[i]])
+    #print('dW')
+    #print(i)
+    #print(dW[[i]])
     
     #print('dW')
     #print(dW[[i]])
@@ -242,25 +239,25 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
   # nn - updated network list with new node vectors w and new list of offset
   #      vectors
   
-  for(m in 1:1){
+  for(m in 1:nstep){
     #Sample mb points from the input
     data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
     nn_list <- list()
     
-    n=1
-    nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
-                        inp[data_sample[n],3], inp[data_sample[n],4]))
-    ls <- loss(k[1],nn$h[[length(nn$h)]],1)
-    w <- nn$w[[3]]
-    nn$w[[3]][1,1] <- nn$w[[3]][1,1] + 10^(-7)
-    nn$h2 <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
-                           inp[data_sample[n],3], inp[data_sample[n],4]))
-    ls2 <- loss(k[1],nn$h2[[length(nn$h2)]],1)
-    der <- (ls2-ls)/10^(-7)
-    nn<-backward(nn,k[1])
-    print('Derivatives')
-    print(nn$dW[[1]][1,1])
-    print(der)
+    # n=1
+    # nn$h<-forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+    #                     inp[data_sample[n],3], inp[data_sample[n],4]))
+    # ls <- loss(k[1],nn$h[[length(nn$h)]],1)
+    # w <- nn$w[[3]]
+    # nn$w[[3]][1,1] <- nn$w[[3]][1,1] + 10^(-7)
+    # nn$h2 <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
+    #                        inp[data_sample[n],3], inp[data_sample[n],4]))
+    # ls2 <- loss(k[1],nn$h2[[length(nn$h2)]],1)
+    # der <- (ls2-ls)/10^(-7)
+    # nn<-backward(nn,k[1])
+    # print('Derivatives')
+    # print(nn$dW[[1]][1,1])
+    # print(der)
     
     
     #Initialize lists to store each of the averages
@@ -272,17 +269,19 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     db_list <- list()
     
     #Run forward/backward on each point
-    for(n in 1:1){
+    for(n in 1:mb){
       nn$h <- forward(nn, c(inp[data_sample[n],1], inp[data_sample[n],2],
                             inp[data_sample[n],3], inp[data_sample[n],4]))
       kstar <- k[data_sample]
       nn_matrix <- backward(nn,kstar[n])
-      print(nn_matrix$dh)
+      #print(nn_matrix$dh)
       dh_list[[n]] <- nn_matrix$dh
       dW_list[[n]] <- nn_matrix$dW
       db_list[[n]] <- nn_matrix$db
       
+      
       for(l in 1:length(nn_matrix$dh)){
+
         if (n == 1){
           dh_average[[l]] <- nn_matrix$dh[[l]]
         }
@@ -317,6 +316,7 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       dW_average[[l]] <- dW_average[[l]]/mb
       db_average[[l]] <- db_average[[l]]/mb
     }
+    
     
     #Get new gradients; store these
     for(i in 1:(length(nn$h)-1)){
@@ -355,7 +355,7 @@ irisFunct <- function(){
     #Convert these into probabilities using the equations on the sheet
     sum_exp <- sum(exp(nn_temp[[4]]))
     probs <- exp(nn_temp[[4]]) / sum_exp
-    #print(probs)
+    print(probs)
   }
   
   
