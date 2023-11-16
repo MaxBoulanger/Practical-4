@@ -1,4 +1,5 @@
-#Will Henshon, s2539250; ADD YOUR NAMES AND NUMBERS HERE
+#Will HENSHON, s2539250; ADD YOUR NAMES AND NUMBERS HERE
+#Max BOULANGER, s2599704
 #
 #Git address: https://github.com/MaxBoulanger/Practical-4
 #
@@ -94,7 +95,7 @@ h_val <- function(val){
   #Helper function for forward. Takes a value and returns
   #the value if greater than 0, and 0 otherwise.
   #Inputs:
-  # vec - a numerical value
+  # val - a numerical value
   #Outputs
   # to_return - returns 0 if the inputted value is less than 0 and the inputted
   #             value otherwise
@@ -110,19 +111,24 @@ h_val <- function(val){
 }
 
 backward <- function(nn, k){
-  #Add docstring
+  #Takes a network list (containing nodes, weight matrices, and offset vectors)
+  #and an output class and calculated the derivatives of the loss function
+  #
+  #Inputs
+  # nn - network list returned from forward containing at least h, a list of node 
+  #      vectors, w, a list of weight matrices, and b, a list of offset vectors, 
+  #      all with the correct sizes for the shape of the network
+  # k - output class that we are interested in
+  #
+  #Outputs
+  # nn - netowrk list updated by adding the derivatives with regard to nodes, dh,
+  #      weights, dW and offset, db
   
-  #print('k')
-  #print(k)
   #Find the number of layers
   L = length(nn$h)
   #Retrieve the nodes for easy access
   h <- nn$h
   
-  #print('k')
-  #print(k)
-  #print('h')
-  #print(h)
   
   #Initialize lists to store each of the derivatives
   dh <- list()
@@ -184,13 +190,37 @@ backward <- function(nn, k){
 }
 
 train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
-  
+  #Takes a network list (containing nodes, weight matrices, and offset vectors),
+  #an input vector and its corresponding labels, the step size, the number of 
+  #data to randomly sample to compute the gradient and the number of 
+  #optimization steps to take, and trains our network 
+  #
+  #Inputs
+  # nn - network list returned from forward containing at least h, a list of node 
+  #      vectors, w, a list of weight matrices, b, a list of offset vectors, and
+  #      the derivatives with regard to nodes, dh, weights, dW and offset, db 
+  #      all with the correct sizes for the shape of the network
+  # inp - input vector of size equal to the number of nodes in the first level
+  #
+  # k - output class that we are interested in
+  #
+  # eta - step size used to update the parameters
+  #
+  # mb -  number of data to randomly sample to compute the gradient
+  #
+  # nstep - number of optimization steps to take
+  #
+  #Outputs
+  #
+  # nn - updated network list with new node vectors w and new list of offset
+  #      vectors
   
   for(m in 1:nstep){
     #Sample mb points from the input
     data_sample <- sample(1:length(inp[,1]), mb,replace=TRUE)
     nn_list <- list()
     
+    #Initialize lists to store each of the averages
     dh_average <- list()
     dW_average <- list()
     db_average <- list()
@@ -209,10 +239,8 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       db_list[[n]] <- nn_matrix$db
       
       for(l in 1:length(nn_matrix$dh)){
-        #print(nn_matrix$dh[[l]])
         if (n == 1){
           dh_average[[l]] <- nn_matrix$dh[[l]]
-
         }
         else{
           dh_average[[l]] <- dh_average[[l]]+nn_matrix$dh[[l]]
@@ -226,18 +254,17 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
           dW_average[[l]] <- dW_average[[l]] + nn_matrix$dW[[l]]
         }
       }
-      
       for(l in 1:length(nn_matrix$db)){
         
         if (n == 1){
           db_average[[l]] <- nn_matrix$db[[l]]
-          #print(nn_matrix$db[[l]])
         }
         else {
           db_average[[l]] <- db_average[[l]] + nn_matrix$db[[l]]
         }
       }
     }
+    
     #Take the average of our 10 gradients
     for(l in 1:length(dh_average[[1]])){
       dh_average[[l]] <- dh_average[[l]]/mb
@@ -254,10 +281,13 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
     }
   }
   
+  #Return the updated list
   return(nn)
 }
 
 irisFunct <- function(){
+  #This function aims to apply our model to the iris database
+  
   nn<- netup(c(4,8,7,3))
   vec = rep(0,length(iris$Species))
   vec[iris$Species=='setosa'] <- 1
