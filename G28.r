@@ -14,10 +14,21 @@
 #outputs based on continuous numerical inputs. To do this, we can create
 #lists of nodes for each layer in the network, and then generate arbitrary
 #weight matrices and offset vectors for each node layer: these are initially
-#generated from a uniform distribution, and then trained.We then sample small 
+#generated from a uniform distribution, and then trained. We then sample small 
 #subsets of our input dataset. For each point in this dataset, we first comp-
-#ute the entire network of nodes: this is completed by 
-
+#ute the entire network of nodes: given a node layer l, layer l+1 is computed
+#by multiplying the weight matrix time l and then adding the offset vector for
+#the next layer (we also set any below-0 values to be 0). The final layer of 
+#nodes are defined to correspond to the probability of each output value 
+#by dividing the e^(node value) by the sum of all of these terms for all of the
+#output node values. This can then be used to compute a loss: this is the
+#negative sum of the logs of the probabilities of output class k over n points,
+#divided by n. We want to minimize the loss: we do this by stochastic gradient
+#descent; we compute the derivatives of the loss with respect to each weight 
+#matrix and offset vector. We do this for each of our sampled points by working
+#backwards from the final layer of nodes. Finally, once we've calculated the
+#derivatives for each of our sampled points, we find the average of these and
+#adjust the weight matrices and offset vectors accordingly. 
 
 
 netup <- function(d){
