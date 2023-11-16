@@ -337,18 +337,6 @@ train <- function(nn, inp, k, eta=0.01, mb = 10, nstep = 10000){
       }
     }
     
-
-    #for(l in 1:length(dh_average[[1]])){
-    #  dh_average[[l]] <- dh_average[[l]]/mb
-    #}
-    
-    
-    #Take the average of our mb gradients for dW and db DONE ABOVE
-    # for(l in 1:length(db_average)){
-    #   dW_average[[l]] <- dW_average[[l]]/mb
-    #   db_average[[l]] <- db_average[[l]]/mb
-    # }
-    
     
     #Get new gradients; store these
     for(i in 1:(length(nn$h)-1)){
@@ -372,7 +360,7 @@ irisFunct <- function(){
   #for each point and computing the misclassification rate.
   
   #Set a random seed that trains the function properly
-  set.seed(0)
+  set.seed(1)
   
   #Create a network with layers of size 4, 8, 7, and 3
   nn<- netup(c(4,8,7,3))
@@ -393,6 +381,7 @@ irisFunct <- function(){
   
   
   iris_predict <- iris[output_indices,]
+  print(iris_predict[1:10,])
   probs<- matrix(0, length(iris_predict[,1]), 3)
   #Iterate across the testing points
   for(i in 1:length(iris_predict[,1])){
@@ -414,10 +403,16 @@ irisFunct <- function(){
   #Check this when the code works
   print(probs)
   #Find the maximum probability output for each test point
-  prob_max <- sapply(probs, which.max)
-  
+  prob_max <- max.col(probs)
+
+  output_flowers <- rep(0,length(iris_predict[,1]))
+  output_flowers[prob_max==1] <- 'setosa'  
+  output_flowers[prob_max==2] <- 'versicolor'
+  output_flowers[prob_max==3] <- 'virginica'
   #Find the number of points that were correct, and print the misclassification
   #rate
+  
+  print(output_flowers)
   prob_correct <- which(prob_max==vec[output_indices])
   print('Misclassification rate:')
   print(1-(length(prob_correct)/30))
