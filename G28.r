@@ -3,7 +3,7 @@
 #Tejaswi JAYARAM, s2547601
 #Git address: https://github.com/MaxBoulanger/Practical-4
 #
-#Will: I completed about 45% of the project. I worked with Max and TJ during
+#Will: I completed about 45% of the project. I worked with Max and Tejaswi during
 #class time to structure and design drafts of the code, as well as debug. I also
 #spent significant time outside of class debugging and testing the code; I
 #caught several key bugs in the forward, backward, and train functions in this
@@ -14,6 +14,10 @@
 #I also helped debug several issues particularly in backward and train
 #functions. I completed about 25% of the project. 
 #
+#Max: I completed about 30% of the project. During the workshops, I worked with  
+#Tejaswi and Will, structuring the code and writing the main functions of the  
+#project. I wrote part of the comments of the code while trying to fix bugs.
+#With Will, I also participated on the first big part of the debugging.
 #
 #This code allows for the construction of a neural network of arbitrary size,
 #which can be used (after training with some dataset) to predict qualitative
