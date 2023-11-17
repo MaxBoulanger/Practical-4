@@ -299,7 +299,7 @@ irisFunct <- function(){
   #for each point and computing the misclassification rate.
   
   #Set a random seed that trains the function properly
-  set.seed(1)
+  set.seed(2)
   
   #Create a network with layers of size 4, 8, 7, and 3
   nn<- netup(c(4,8,7,3))
@@ -317,16 +317,16 @@ irisFunct <- function(){
   
   #Find the initial loss
   hl <- matrix(0,120,3)
-  ls1 <-0
+  ls1 <- rep(0,120)
   #Find the output layer of the network for each point
   for(i in 1:120){
     hl[i,1:3]<-forward(nn,as.numeric(iris_train[i,1:4]))[[4]]
+    ls1[i] <- loss(vec_train[i],hl[i,1:3],120)
   }
   #Apply the loss function and sum the results
-  loss1calc<- sapply(vec_train,loss,hL=hl[i,1:3])
-  ls1 <- sum(loss1calc)
+  loss1 <- sum(ls1)
   print('Initial loss:')
-  print(ls1)
+  print(loss1)
   
   #Train a network with the training data
   nn1<- train(nn, iris_train, vec_train)
@@ -334,15 +334,15 @@ irisFunct <- function(){
   #Find the loss after fitting
   #Find the the output layer of the network for each point
   hl <- matrix(0,120,3)
-  ls2<-0
+  ls2<-rep(0,120)
   for(i in 1:120){
     hl[i,1:3]<-forward(nn1,as.numeric(iris_train[i,1:4]))[[4]]
+    ls2[i] <- loss(vec_train[i],hl[i,1:3],120)
   }
   #Compute the loss and sum it
-  loss2calc<- sapply(vec_train,loss,hL=hl[i,1:3])
-  ls2 <- sum(loss2calc)
+  loss2 <- sum(ls2)
   print('Final loss:')
-  print(ls2)
+  print(loss2)
   
   
   iris_predict <- iris[output_indices,]
@@ -352,7 +352,7 @@ irisFunct <- function(){
     #Generate the nodes for the given testing vector
     iris_vec <- as.numeric(iris_predict[i,1:4])
     nn_temp <- forward(nn1, iris_vec)
-    #print(nn_temp)
+    #print(nn_temp[[4]])
     #Convert these into probabilities using the equations on the sheet
     
     #Compute the probability of each output for that vector
@@ -393,7 +393,6 @@ loss <- function(k, hL, n=1){
   #
   #Outputs:
   #s3 - the loss associated with the model, unsummed
-  
   #Compute the sum of the natural exponents of each output node
   sum1 <- sum(exp(hL))
   #Compute the probability for each hL set and k value
