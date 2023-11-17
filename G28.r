@@ -7,7 +7,7 @@
 #class time to structure and design drafts of the code, as well as debug. I also
 #spent significant time outside of class debugging and testing the code; I
 #caught several key bugs in the forward, backward, and train functions in this
-#way. Found key bug in backwards function delaying completion of project.
+#way. I also wrote the majority of the iris_funct function.
 #
 #Tejaswi: I worked alongside Max and Will during the workshop helped to write
 #the logic and structure of netup, forward, backward and train functions. 
